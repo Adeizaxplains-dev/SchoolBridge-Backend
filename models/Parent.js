@@ -1,24 +1,55 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const parentSchema = new mongoose.Schema(
   {
-    school: {
+    schoolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
+      required: true,
     },
 
-    name: String,
+    fullName: {
+      type: String,
+      required: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+
     phone: String,
-    email: String,
+
+    password: {
+      type: String,
+      required: true,
+    },
 
     children: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Student",
-      }
+      },
     ],
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Parent", parentSchema);
+parentSchema.pre("save", async function (next) {
+  if (!this.isModified("password"))
+    return next();
+
+  this.password = await bcrypt.hash(
+    this.password,
+    10
+  );
+
+  next();
+});
+
+export default mongoose.model(
+  "Parent",
+  parentSchema
+);
